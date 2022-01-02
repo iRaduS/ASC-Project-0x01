@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+npx tsc
+cp mc -r build/mc
+node build/index.js
