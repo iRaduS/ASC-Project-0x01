@@ -1,0 +1,9 @@
+{
+  "rd": 0,
+  "rs1": 0,
+  "rs2": 0,
+  "opcode": 0,
+  "err": false,
+  "imm": 0,
+  "inst": 0
+}
