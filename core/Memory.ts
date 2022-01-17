@@ -10,13 +10,14 @@ import { ObjectOfStrings } from '../helpers/Parser'
 export default class Memory {
     private _stack: Array<number> = []
     private _offset: number = 0
+    private static singleton: Memory;
 
-    /**
-     * Class constructor for the Memory
-     */
-    constructor() {
-        this.resetOffset()
-        this.resetStack()
+    public static instance(): Memory {
+        if (!Memory.singleton) {
+            Memory.singleton = new Memory()
+        }
+
+        return Memory.singleton
     }
 
     /**
@@ -39,7 +40,7 @@ export default class Memory {
      * @param address
      */
     public getDataStack(address: number): number {
-        return this._stack[address]
+        return this._stack[address] || 0
     }
 
     /**
@@ -57,7 +58,7 @@ export default class Memory {
             )
         }
 
-        this._stack[address] = data
+        this._stack[address] = data | 0
     }
 
     /**

@@ -2,4 +2,5 @@
 
 npx tsc
 cp mc -r build/mc
-node build/index.js
+cp .env build/.env
+node -r dotenv/config build/index.js
