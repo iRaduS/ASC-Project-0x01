@@ -8,7 +8,7 @@
 import registers from './../helpers/data/registers.json'
 import formats from './../helpers/data/formats.json'
 import Memory from './Memory'
-import _ from 'lodash'
+import _, {parseInt} from 'lodash'
 
 const memory = Memory.instance()
 
@@ -191,7 +191,6 @@ export default class Processor {
                 let computeImm: number = parseInt(_.reverse([...(_.slice([...repr], 20, 24).reverse().join('')
                     + _.slice([...repr], 1, 7).reverse().join('')
                     + repr[24] + repr[0])]).join(''), 2)
-
                 computeImm = (computeImm & 0x7FF) - (computeImm & 0x800)
 
                 this.fmt = {
@@ -246,11 +245,47 @@ export default class Processor {
                 break
             }
             case 51: {
-                if (this.fmt.f3 === 4) {
-                    const key = this.getReg(this.fmt.rd)
+                const key = this.getReg(this.fmt.rd)
+                const keyr1 = this.getReg(this.fmt.rs1)
+                const keyr2 = this.getReg(this.fmt.rs2 & 0x1F)
 
+                if (this.fmt.f3 === 4) {
                     if (key != 'zero') {
-                        this.regs[key] = this.regs[this.getReg(this.fmt.rs1)] ^ this.regs[this.getReg(this.fmt.rs2)]
+                        this.regs[key] = this.regs[keyr1] ^ this.regs[keyr2]
+                    }
+                } else if (this.fmt.f3 === 6) {
+                    if (((this.fmt.rs2 & 0xFE0) >>> 5) === 1) {
+
+                        if (key != 'zero') {
+                            if (this.regs[keyr2] === 0) {
+                                this.regs[key] = this.regs[keyr1]
+                            } else if (this.regs[keyr1] * this.regs[keyr2] > 0) {
+                                this.regs[key] = this.regs[keyr1] % this.regs[keyr2]
+                            } else {
+                                this.regs[key] = this.regs[keyr1] - Math.ceil(this.regs[keyr1] / this.regs[keyr2]) * this.regs[keyr2]
+                            }
+                        }
+                    }
+                } else if (this.fmt.f3 === 5) {
+                    if ((this.fmt.rs2 & 0xFE0) === 0) {
+                        if (key != 'zero') {
+                            const off: number = this.regs[keyr2] & 0x1F
+
+                            if (off === 0) {
+                                this.regs[key] = this.regs[keyr1]
+                            } else {
+                                let old: number = this.regs[keyr1]
+
+                                if (old < 0) {
+                                    const rep: string = (old >>> 0).toString(2).padStart(32, '0')
+                                    const shifted: string = _.slice([...rep], 0, 32 - off).join('').padStart(32, '0')
+                                    old = parseInt(shifted, 2)
+                                } else {
+                                    old = old >> off
+                                }
+                                this.regs[key] = old
+                            }
+                        }
                     }
                 }
                 this.regs.pc += 4
